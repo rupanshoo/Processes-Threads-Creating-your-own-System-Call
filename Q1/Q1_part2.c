@@ -20,7 +20,7 @@ void *childFunc(){   //child function  --> decrememnts
    return NULL;
 }
 
-int main(){
+int main(){   //Parent thread --> incrementing
 
    //child thread's ID
    pthread_t child;
