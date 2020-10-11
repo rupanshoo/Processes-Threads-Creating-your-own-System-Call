@@ -2,8 +2,8 @@
 ## Question-1
 1. Used Q1_part1.c for fork()
 2. Used Q1_part2.c for pthreads
-3. Added to the given Makefile for code compilation. (We will only run the predefined targets)
-4. Submitted the writeup as writeup.pdf
+3. Added to the given Makefile for code compilation.
+4. Writeup submitted as writeup.pdf
 
 
 ## Question-2
