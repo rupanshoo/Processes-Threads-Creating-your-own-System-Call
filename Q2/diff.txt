@@ -1,1 +1,140 @@
-# The diff should be in the form of text (Not image).
+diff -Naur Changed-linux-5.9.1/arch/x86/entry/syscalls/syscall_64.tbl OG-linux-5.9.1/arch/x86/entry/syscalls/syscall_64.tbl
+--- Changed-linux-5.9.1/arch/x86/entry/syscalls/syscall_64.tbl	2020-10-28 09:53:02.135629095 -0700
++++ OG-linux-5.9.1/arch/x86/entry/syscalls/syscall_64.tbl	2020-10-16 23:31:22.000000000 -0700
+@@ -361,7 +361,6 @@
+ 437	common	openat2			sys_openat2
+ 438	common	pidfd_getfd		sys_pidfd_getfd
+ 439	common	faccessat2		sys_faccessat2
+-440	common	sh_task_info		sys_sh_task_info
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+diff -Naur Changed-linux-5.9.1/Makefile OG-linux-5.9.1/Makefile
+--- Changed-linux-5.9.1/Makefile	2020-10-28 09:55:21.124210645 -0700
++++ OG-linux-5.9.1/Makefile	2020-10-16 23:31:22.000000000 -0700
+@@ -1094,7 +1094,7 @@
+ export MODULES_NSDEPS := $(extmod-prefix)modules.nsdeps
+ 
+ ifeq ($(KBUILD_EXTMOD),)
+-core-y		+= kernel/ certs/ mm/ fs/ ipc/ security/ crypto/ block/ sh_task_info/
++core-y		+= kernel/ certs/ mm/ fs/ ipc/ security/ crypto/ block/
+ 
+ vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, \
+ 		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
+diff -Naur Changed-linux-5.9.1/sh_task_info/Makefile OG-linux-5.9.1/sh_task_info/Makefile
+--- Changed-linux-5.9.1/sh_task_info/Makefile	2020-10-28 10:01:29.298827567 -0700
++++ OG-linux-5.9.1/sh_task_info/Makefile	1969-12-31 16:00:00.000000000 -0800
+@@ -1 +0,0 @@
+-obj-y := sh_task_info.o
+\ No newline at end of file
+diff -Naur Changed-linux-5.9.1/sh_task_info/sh_task_info.c OG-linux-5.9.1/sh_task_info/sh_task_info.c
+--- Changed-linux-5.9.1/sh_task_info/sh_task_info.c	2020-10-28 09:59:37.119903825 -0700
++++ OG-linux-5.9.1/sh_task_info/sh_task_info.c	1969-12-31 16:00:00.000000000 -0800
+@@ -1,96 +0,0 @@
+-#include <linux/init.h>
+-#include <linux/kernel.h>
+-#include <linux/sched.h>
+-#include <linux/syscalls.h>
+-#include <linux/fs.h>
+-#include <asm/segment.h>
+-#include <asm/uaccess.h>
+-#include <linux/buffer_head.h>
+-#include <linux/module.h>
+-#include <linux/linkage.h>
+-#include <linux/uaccess.h>
+-#include <linux/errno.h>
+-#include <linux/string.h>
+-
+-SYSCALL_DEFINE2(sh_task_info, long, PID ,char *, fileName){
+-	char buf[256];
+-	long copied = strncpy_from_user(buf, fileName, sizeof(buf));
+-
+-	struct file *f;
+-	loff_t pos = 0;
+-	char procesDeets[4000];
+-	char tmp[3000];
+-
+-
+-	pid_t pid = PID;
+-	struct pid *pid_struct = find_get_pid(pid);
+-
+-	struct task_struct *task = pid_task(pid_struct, PIDTYPE_PID);
+-
+-	if(task == NULL){
+-		printk(KERN_INFO "Process is NOT running");
+-		return EFAULT;
+-	}
+-	else{
+-		printk(KERN_INFO "Process is running");
+-		printk(KERN_INFO
+-      "Process: %s\n \
+-       PID_Number: %ld\n \
+-       Process State: %ld\n \
+-       Priority: %ld\n \
+-       RT_Priority: %ld\n \
+-       Virtual Runtime: %ld\n \
+-       Static Priority: %ld\n \
+-       Normal Priority: %ld\n", \
+-       task->comm, \
+-       (long)task_pid_nr(task), \
+-       (long)task->state, \
+-       (long)task->prio, \
+-       (long)task->rt_priority, \
+-       (long)task->se.vruntime, \
+-       (long)task->static_prio, \
+-       (long)task->normal_prio \
+-    	);
+-
+-
+-		f = filp_open(buf, O_WRONLY|O_CREAT, 0666);
+-
+-
+-		if (f == NULL) {
+-        printk("Unable to access file\n");
+-        return EFAULT;
+-    	}
+-
+-
+-    	strcpy(procesDeets, "Process: ");
+-		strcat(procesDeets , task->comm);
+-		strcat(procesDeets, "\n");
+-
+-		strcat(procesDeets, "PID_Number: ");
+-		sprintf(tmp, "%ld \n", (long)task_pid_nr(task));
+-    	strcat(procesDeets, tmp);
+-    	
+-
+-    	strcat(procesDeets, "Process State: ");
+-		sprintf(tmp, "%ld \n", (long)task->state);
+-    	strcat(procesDeets, tmp);
+-    	
+-
+-    	strcat(procesDeets, "Priority: ");
+-		sprintf(tmp, "%ld \n", (long)task->prio);
+-    	strcat(procesDeets, tmp);
+-    	
+-
+-    	strcat(procesDeets, "Virtual Runtime: ");
+-		sprintf(tmp, "%ld \n", (long)task->se.vruntime);
+-    	strcat(procesDeets, tmp);
+-    	
+-
+-    	kernel_write(f, procesDeets, 100, &pos);
+-
+-    	filp_close(f, NULL);
+-
+-
+-		return 0;
+-	}
+-}
+diff -Naur Changed-linux-5.9.1/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl OG-linux-5.9.1/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
+--- Changed-linux-5.9.1/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl	2020-10-28 09:53:02.139629034 -0700
++++ OG-linux-5.9.1/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl	2020-10-16 23:31:22.000000000 -0700
+@@ -361,7 +361,6 @@
+ 437	common	openat2			sys_openat2
+ 438	common	pidfd_getfd		sys_pidfd_getfd
+ 439	common	faccessat2		sys_faccessat2
+-440	common	sh_task_info		sys_sh_task_info
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
